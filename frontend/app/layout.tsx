@@ -21,8 +21,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'ChocoLuxe — Premium Artisan Chocolates',
-  description: 'Indulge in handcrafted luxury chocolates sourced from the world\'s finest cacao regions. Free shipping on orders over $50.',
-  keywords: ['premium chocolate', 'artisan chocolate', 'luxury chocolate', 'gift chocolate'],
+  description: 'Indulge in handcrafted luxury chocolates sourced from the world\'s finest cacao regions. Free shipping on orders over ₹2500.',
+  keywords: ['premium chocolate', 'artisan chocolate', 'luxury chocolate', 'gift chocolate', 'imported chocolates India'],
   openGraph: {
     title: 'ChocoLuxe — Premium Artisan Chocolates',
     description: 'Handcrafted luxury chocolates from the world\'s finest cacao regions.',
