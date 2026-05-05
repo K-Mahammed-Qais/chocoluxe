@@ -27,7 +27,20 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync().then(() => {
-  app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
+sequelize.sync()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Sequelize sync failed:', err.message);
+    // Don't exit immediately, let nodemon wait for changes
+  });
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+  console.error(`Error: ${err.message}`);
 });
+
 // Restart trigger

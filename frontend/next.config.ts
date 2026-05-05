@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Remove explicit root to prevent watching the entire project
+  /* 
+  turbopack: {
+    root: __dirname,
+  },
+  */
   async rewrites() {
     return [
       {
