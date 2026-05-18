@@ -3,10 +3,12 @@ import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import CartSidebar from '@/components/CartSidebar';
+import { AuthProvider } from '@/context/AuthContext';
 
-const playfair = Playfair_Display({
+const bodoni = Playfair_Display({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '900'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
   display: 'swap',
@@ -14,7 +16,7 @@ const playfair = Playfair_Display({
 
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['300'],
   variable: '--font-inter',
   display: 'swap',
 });
@@ -32,11 +34,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${bodoni.variable} ${inter.variable}`}>
       <body>
-        <Header />
-        <main className="relative z-10">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Header />
+          <CartSidebar />
+          <main className="relative z-10">{children}</main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

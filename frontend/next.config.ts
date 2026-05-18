@@ -1,12 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Remove explicit root to prevent watching the entire project
-  /* 
-  turbopack: {
-    root: __dirname,
-  },
-  */
+  allowedDevOrigins: ['10.62.240.52'],
   async rewrites() {
     return [
       {

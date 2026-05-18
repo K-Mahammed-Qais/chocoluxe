@@ -55,8 +55,8 @@ export default function LoginPage() {
     try {
       const { data } = await axios.post('/api/auth/login', { email, password });
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
-      router.push(data.role === 'admin' ? '/admin' : '/dashboard');
+      localStorage.setItem('user', JSON.stringify(data.user || data));
+      router.push(data.user?.role === 'admin' || data.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {

@@ -1,364 +1,221 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
-import { useResponsive } from '@/lib/responsive';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getSheetProducts } from '@/lib/sheetdb';
+
 
 const CATEGORIES = ['All', 'Milk Chocolates', 'Dark Chocolates', 'White Chocolates', 'Assorted', 'Gift Hamper', 'Sugar Free'];
 
 const SORT_OPTIONS = [
-  { value: '', label: 'Default' },
+  { value: 'default', label: 'Default' },
   { value: 'price_asc', label: 'Price: Low → High' },
   { value: 'price_desc', label: 'Price: High → Low' },
   { value: 'newest', label: 'Newest First' },
 ];
 
-/* ─── Product Card ─────────────────────────────────────── */
-function ProductCard({ product, isMobile = false }: { product: any; isMobile?: boolean }) {
-  const [hovered, setHovered] = useState(false);
+// Initial mock data removed - now using SheetDB
 
-  return (
-    <div
-      className="glass-card"
-      style={{
-        overflow: 'hidden',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid var(--glass-border)',
-        background: 'var(--glass-bg)',
-        transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease',
-        transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
-        boxShadow: hovered ? '0 16px 40px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0, 0.04)',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* Image */}
-      <div style={{ position: 'relative', height: isMobile ? '180px' : '240px', overflow: 'hidden', background: 'var(--surface-2)' }}>
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            style={{ objectFit: 'cover', transition: 'transform 0.5s ease', transform: hovered ? 'scale(1.06)' : 'scale(1)' }}
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5rem' }}>
-            🍫
-          </div>
-        )}
 
-        {/* Badges */}
-        <div style={{ position: 'absolute', top: '1rem', left: '1rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-          {product.isFeatured && (
-            <span style={{ padding: '0.25rem 0.7rem', background: '#1A0A00', color: '#FFFDF9', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              ★ Featured
-            </span>
-          )}
-          {product.stock === 0 && (
-            <span style={{ padding: '0.25rem 0.7rem', background: 'rgba(26,10,0,0.6)', color: 'rgba(255,253,249,0.7)', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              Sold Out
-            </span>
-          )}
-        </div>
-
-        {/* Category tag */}
-        {product.category && (
-          <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
-            <span style={{ padding: '0.25rem 0.7rem', background: '#FFFDF9', border: '1px solid rgba(26,10,0,0.15)', color: '#1A0A00', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.06em' }}>
-              {product.category}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div style={{ 
-        padding: '1.5rem', 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        borderTop: '1px solid var(--glass-border)',
-        background: 'rgba(255,253,249,0.5)',
-        backdropFilter: 'blur(12px) saturate(1.1)',
-        WebkitBackdropFilter: 'blur(12px) saturate(1.1)',
-      }}>
-        <h3 style={{
-          fontFamily: 'var(--font-playfair, Georgia, serif)',
-          fontSize: '1.05rem',
-          fontWeight: 700,
-          color: '#1A0A00',
-          marginBottom: '0.4rem',
-          lineHeight: 1.3,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}>
-          {product.name}
-        </h3>
-        <p style={{
-          color: 'rgba(26,10,0,0.5)',
-          fontSize: '0.825rem',
-          lineHeight: 1.6,
-          flex: 1,
-          marginBottom: '1.25rem',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}>
-          {product.description}
-        </p>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontSize: '1.4rem', fontWeight: 700, color: '#1A0A00' }}>
-              ₹{product.price?.toFixed(0)}
-            </div>
-            {product.stock > 0 && (
-              <div style={{ fontSize: '0.7rem', color: 'rgba(26,10,0,0.4)', marginTop: '0.1rem' }}>
-                {product.stock < 10 ? `Only ${product.stock} left` : 'In Stock'}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Link
-              href={`/product/${product._id}`}
-              style={{
-                padding: '0.55rem 1.1rem',
-                border: '1px solid rgba(26,10,0,0.3)',
-                background: 'transparent',
-                color: '#1A0A00',
-                fontSize: '0.775rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-              }}
-            >
-              View
-            </Link>
-            {product.stock > 0 && (
-              <button
-                onClick={e => { e.stopPropagation(); e.preventDefault(); alert('Added to cart!'); }}
-                className="btn-gold"
-                style={{ padding: '0.55rem 1.1rem', fontSize: '0.775rem' }}
-              >
-                Add
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 function ShopContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { isMobile, isTablet, isDesktop } = useResponsive();
-
-  const [products, setProducts] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('default');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [keyword, setKeyword] = useState(searchParams.get('keyword') || '');
-  const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '');
-  const [sortBy, setSortBy] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (activeCategory && activeCategory !== 'All') params.append('category', activeCategory);
-      if (keyword) params.append('keyword', keyword);
-      const { data } = await axios.get(`/api/products?${params.toString()}`);
-      setProducts(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load products.');
-    } finally {
-      setLoading(false);
-    }
-  }, [activeCategory, keyword]);
-
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
-
+  // Fetch and sort from SheetDB
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (activeCategory && activeCategory !== 'All') params.set('category', activeCategory);
-    if (keyword) params.set('keyword', keyword);
-    router.replace(`/shop${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
-  }, [activeCategory, keyword, router]);
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        let mappedData: any[] = [];
 
-  const sorted = [...products].sort((a, b) => {
-    if (sortBy === 'price_asc') return a.price - b.price;
-    if (sortBy === 'price_desc') return b.price - a.price;
-    if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    return 0;
-  });
+        const sheetProds = await getSheetProducts();
+        
+        mappedData = sheetProds.map(p => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          originalPrice: p.original_price,
+          inStock: p.in_stock,
+          imgUrl: p.img_url,
+          description: p.description,
+          origin: p.origin || '',
+          category: p.category,
+          height: 300 + Math.floor(Math.random() * 200)
+        }));
+
+        // Filter by category
+        if (activeCategory !== 'All') {
+          mappedData = mappedData.filter(p => p.category === activeCategory);
+        }
+
+        // Apply sorting
+        if (sortBy === 'price_asc') {
+          mappedData.sort((a, b) => a.price - b.price);
+        } else if (sortBy === 'price_desc') {
+          mappedData.sort((a, b) => b.price - a.price);
+        } else if (sortBy === 'newest') {
+          mappedData.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+        }
+
+        setProducts(mappedData);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [activeCategory, sortBy]);
+
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingTop: '72px' }}>
-
-      {/* ─── Page Header */}
-      <div style={{ 
-        borderBottom: '1px solid var(--glass-border)', 
-        padding: '3rem 2rem 2rem', 
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(16px) saturate(1.3)',
-        WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
-      }}>
-        <div style={{ maxWidth: '1440px', margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.03em', lineHeight: 1 }}>
-              Shop <span style={{ fontStyle: 'italic', fontWeight: 400 }}>Collection</span>
-            </h1>
-            <p style={{ color: 'var(--text-muted)', marginTop: '0.75rem', fontSize: '0.95rem' }}>
-              {loading ? 'Loading...' : `${sorted.length} products available`}
-            </p>
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.6, ease: easing }}
+      className="bg-[var(--background)] min-h-screen pt-32 pb-32"
+    >
+      <div className="max-w-[1600px] mx-auto px-8 md:px-16">
+        
+        {/* Page Title & Sort Row */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
+          <h1 className="font-serif text-[clamp(40px,6vw,80px)] text-[var(--primary-text)] leading-[0.95] tracking-[-0.03em]">
+            The <span className="italic">Collection</span>
+          </h1>
+          
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="appearance-none bg-transparent border-none text-[var(--primary-text)] font-sans font-light text-[10px] uppercase tracking-[0.15em] outline-none cursor-pointer pb-1 pr-4"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <span className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--primary-text)] text-[10px]">▼</span>
           </div>
-          <span className="section-tag" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(8px)' }}>{activeCategory || 'All Products'}</span>
         </div>
-      </div>
 
-      {/* ─── Category Nav */}
-      <div style={{ 
-        borderBottom: '1px solid var(--glass-border)', 
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(20px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-        overflowX: 'auto' 
-      }}>
-        <div style={{ maxWidth: '1440px', margin: '0 auto', display: 'flex', padding: '0 2rem' }}>
-          {CATEGORIES.map((cat, idx) => {
-            const active = (cat === 'All' && !activeCategory) || activeCategory === cat;
+        {/* Filters floating above grid */}
+        <div className="flex flex-wrap gap-8 mb-20">
+          {CATEGORIES.map(cat => {
+            const isActive = activeCategory === cat;
             return (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat === 'All' ? '' : cat)}
-                style={{
-                  padding: '1.25rem 1.5rem',
-                  background: active ? '#1A0A00' : 'transparent',
-                  color: active ? '#FFFDF9' : 'rgba(26,10,0,0.6)',
-                  borderRight: idx === CATEGORIES.length - 1 ? 'none' : '1px solid rgba(26,10,0,0.08)',
-                  whiteSpace: 'nowrap',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  fontSize: '0.78rem',
-                  letterSpacing: '0.07em',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  flexShrink: 0,
-                }}
+                onClick={() => setActiveCategory(cat)}
+                className={`font-sans font-light text-[13px] uppercase tracking-[0.08em] transition-colors duration-400 pb-1 ${
+                  isActive 
+                    ? 'text-[var(--primary-text)] border-b border-[var(--accent)]' 
+                    : 'text-[var(--muted)] border-b border-transparent hover:text-[var(--surface)]'
+                }`}
               >
                 {cat}
               </button>
             );
           })}
         </div>
-      </div>
 
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '3rem 2rem 5rem' }}>
-        {/* ─── Filter/Search Bar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid var(--glass-border)' }}>
-          {/* Search */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '340px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input
-              id="shop-search"
-              type="text"
-              placeholder="Search chocolates…"
-              value={keyword}
-              onChange={e => setKeyword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem 0.75rem 2.75rem',
-                background: 'var(--glass-bg)',
-                border: '1px solid var(--glass-border)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-              }}
-            />
-          </div>
-
-          {/* Sort */}
-          <select
-            id="shop-sort"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            style={{
-              padding: '0.65rem 1rem',
-              background: 'var(--glass-bg)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-primary)',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              outline: 'none',
-              fontWeight: 600,
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
-          >
-            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
-
-        {/* ─── States */}
-        {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 1 : isTablet ? 2 : 3}, 1fr)`, gap: isMobile ? '1rem' : '2rem' }}>
-            {Array.from({ length: isMobile ? 4 : 8 }).map((_, i) => (
-              <div key={i} style={{ height: '380px', background: 'linear-gradient(90deg, #f5f5f5 25%, #ebebeb 50%, #f5f5f5 75%)', backgroundSize: '200% auto', animation: 'shimmer 1.5s linear infinite' }} />
+        {/* Products Grid (CSS columns for masonry effect) */}
+        {loading ? (
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div 
+                key={i} 
+                className="skeleton w-full break-inside-avoid"
+                style={{ height: `${300 + (i % 3) * 100}px` }}
+              />
             ))}
           </div>
-        )}
+        ) : (
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+            <AnimatePresence>
+              {products.map((product, idx) => (
 
-        {error && !loading && (
-          <div style={{ textAlign: 'center', padding: '5rem 1rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-            <p style={{ color: 'rgba(26,10,0,0.5)', marginBottom: '1.5rem' }}>{error}</p>
-            <button onClick={fetchProducts} className="btn-gold">Try Again</button>
+                <motion.div
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: easing, delay: idx * 0.05 }}
+                  className="group bg-[var(--primary-text)] shadow-[var(--card-shadow)] flex flex-col break-inside-avoid w-full"
+                >
+                  <Link href={`/shop/${product.slug}`} className="flex flex-col h-full cursor-pointer text-decoration-none">
+                    {/* Image fills top ~70% */}
+                    <div 
+                      className="relative w-full overflow-hidden bg-[var(--surface)] group-hover:scale-105 transition-transform duration-500 ease-out"
+                      style={{ height: `${product.height * 0.7}px` }}
+                    >
+                      <img 
+                        src={product.imgUrl} 
+                        alt={product.name}
+                        className="w-full h-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-106"
+                      />
+                      {!product.inStock && (
+                        <div className="absolute top-4 left-4 bg-[var(--error)] text-[var(--background)] font-sans text-[10px] uppercase tracking-[0.15em] px-2 py-1">
+                          Out of Stock
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 flex flex-col flex-grow justify-between relative bg-[var(--primary-text)]">
+                      <div>
+                        <div className="mb-3 flex justify-between items-center">
+                          <span className="uppercase font-sans text-[10px] text-[var(--surface)] tracking-[0.08em]">
+                            {product.origin}
+                          </span>
+                        </div>
+                        <h3 className="font-serif text-[22px] text-[var(--background)] mb-1 leading-tight">
+                          {product.name}
+                        </h3>
+                        <p className="font-serif text-[18px] text-[var(--background)]">
+                          ₹{product.price}
+                          {product.originalPrice && (
+                            <span className="text-[var(--muted)] text-[14px] line-through ml-3">
+                              ₹{product.originalPrice}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      
+                      {/* Hover text fades in bottom-left */}
+                      <motion.span 
+                        className="absolute bottom-6 left-6 text-[var(--accent)] font-sans text-[10px] uppercase tracking-[0.15em]"
+                        variants={{
+                          initial: { opacity: 0 },
+                          hover: { opacity: 1 }
+                        }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        — Add
+                      </motion.span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
 
-        {!loading && !error && sorted.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '5rem 1rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🍫</div>
-            <h3 style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontSize: '1.5rem', marginBottom: '0.75rem' }}>No Chocolates Found</h3>
-            <p style={{ color: 'rgba(26,10,0,0.4)', marginBottom: '1.5rem' }}>Try adjusting your filters or search term.</p>
-            <button onClick={() => { setKeyword(''); setActiveCategory(''); }} className="btn-ghost">Clear Filters</button>
-          </div>
-        )}
-
-        {/* ─── Products Grid */}
-        {!loading && !error && sorted.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 1 : isTablet ? 2 : 3}, 1fr)`, gap: isMobile ? '1rem' : '2rem' }}>
-            {sorted.map(product => (
-              <ProductCard key={product._id} product={product} isMobile={isMobile} />
-            ))}
-          </div>
-        )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export default function Shop() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#FFFDF9', paddingTop: '200px', textAlign: 'center', fontSize: '1rem', color: 'rgba(26,10,0,0.4)' }}>Loading Shop...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)] pt-32 text-center text-[var(--muted)] font-sans uppercase text-[10px] tracking-[0.15em]">Loading...</div>}>
       <ShopContent />
     </Suspense>
   );
