@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useCartStore } from '@/lib/store';
+import { Heart } from 'lucide-react';
+import { useCartStore, useWishlistStore } from '@/lib/store';
 import { getSheetProductBySlug, getSheetProducts } from '@/lib/sheetdb';
 
 
@@ -20,6 +21,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
   const [loading, setLoading] = useState(true);
   
   const addItem = useCartStore(state => state.addItem);
+  const { toggleItem, isInWishlist } = useWishlistStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,6 +123,24 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
             alt={product.name}
             className="w-full h-full object-cover"
           />
+          <button
+            onClick={() => toggleItem({
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              price: product.price,
+              imgUrl: product.imgUrl,
+              origin: product.origin,
+            })}
+            className={`absolute top-6 right-6 p-3 rounded-full transition-all duration-300 ${
+              isInWishlist(product.id)
+                ? 'bg-[var(--accent)] text-[var(--background)]'
+                : 'bg-[var(--background)]/90 text-[var(--primary-text)] hover:bg-[var(--background)]'
+            }`}
+            aria-label={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart size={20} strokeWidth={1} className={isInWishlist(product.id) ? 'fill-current' : ''} />
+          </button>
         </div>
 
         {/* Right Side: Sticky Content Panel (40% Desktop) */}

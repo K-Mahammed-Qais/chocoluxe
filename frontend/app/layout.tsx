@@ -4,6 +4,7 @@ import { Playfair_Display, Inter } from 'next/font/google';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartSidebar from '@/components/CartSidebar';
+import WishlistSidebar from '@/components/WishlistSidebar';
 import { AuthProvider } from '@/context/AuthContext';
 
 const bodoni = Playfair_Display({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <Header />
           <CartSidebar />
+          <WishlistSidebar />
           <main className="relative z-10">{children}</main>
           <Footer />
         </AuthProvider>

@@ -10,6 +10,15 @@ export interface CartItem {
   imgUrl: string;
 }
 
+export interface WishlistItem {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  imgUrl: string;
+  origin?: string;
+}
+
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
@@ -19,6 +28,17 @@ interface CartStore {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+}
+
+interface WishlistStore {
+  items: WishlistItem[];
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  addItem: (item: Omit<WishlistItem, never>) => void;
+  removeItem: (id: string) => void;
+  toggleItem: (item: Omit<WishlistItem, never>) => void;
+  isInWishlist: (id: string) => boolean;
+  clearWishlist: () => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -66,6 +86,44 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'chocoluxe-cart',
+    }
+  )
+);
+
+export const useWishlistStore = create<WishlistStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      isOpen: false,
+
+      setIsOpen: (isOpen) => set({ isOpen }),
+
+      addItem: (item) => set((state) => {
+        const existing = state.items.find((i) => i.id === item.id);
+        if (existing) return state;
+        return { items: [...state.items, item] };
+      }),
+
+      removeItem: (id) => set((state) => ({
+        items: state.items.filter((i) => i.id !== id)
+      })),
+
+      toggleItem: (item) => set((state) => {
+        const existing = state.items.find((i) => i.id === item.id);
+        if (existing) {
+          return { items: state.items.filter((i) => i.id !== item.id) };
+        }
+        return { items: [...state.items, item] };
+      }),
+
+      isInWishlist: (id) => {
+        return get().items.some((i) => i.id === id);
+      },
+
+      clearWishlist: () => set({ items: [] }),
+    }),
+    {
+      name: 'chocoluxe-wishlist',
     }
   )
 );

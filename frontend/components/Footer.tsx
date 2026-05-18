@@ -39,10 +39,10 @@ export default function Footer() {
       position: 'relative', 
       overflow: 'hidden' 
     }}>
-      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '5rem 2rem 0', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '6rem 3rem 0', position: 'relative', zIndex: 1 }}>
 
         {/* Top Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '4rem', marginBottom: '4rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '5rem', marginBottom: '5rem' }}>
 
           {/* Brand */}
           <div>

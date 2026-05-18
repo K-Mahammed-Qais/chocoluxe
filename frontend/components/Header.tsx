@@ -1,29 +1,44 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, ShoppingBag, Menu } from 'lucide-react';
-import { useCartStore } from '@/lib/store';
+import { ShoppingBag, Menu, Heart } from 'lucide-react';
+import { useCartStore, useWishlistStore } from '@/lib/store';
+import MegaMenu from './MegaMenu';
+import SearchBar from './SearchBar';
+import UserAccount from './UserAccount';
 
 const NAV_LINKS = [
-  { href: '/shop', label: 'Shop' },
+  { href: '/shop', label: 'Shop', hasMegaMenu: true },
   { href: '/collections', label: 'Collections' },
   { href: '/about', label: 'Our Craft' },
 ];
 
 export default function Header() {
   const pathname = usePathname();
-  const setIsOpen = useCartStore((state) => state.setIsOpen);
-  const items = useCartStore((state) => state.items);
-  const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  const setCartOpen = useCartStore((state) => state.setIsOpen);
+  const setWishlistOpen = useWishlistStore((state) => state.setIsOpen);
+  const cartItems = useCartStore((state) => state.items);
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
 
-  // Must be AFTER all hooks (Rules of Hooks)
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const wishlistCount = wishlistItems.length;
+
+  useEffect(() => {
+    setActiveMegaMenu(null);
+  }, [pathname]);
+
   if (pathname?.startsWith('/admin')) return null;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)] shadow-[0_8px_40px_rgba(75,46,42,0.08)]">
-      <div className="max-w-[1600px] mx-auto px-8 md:px-16">
-        <div className="flex items-center justify-between h-[80px]">
+      <div 
+        className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-20"
+        onMouseLeave={() => setActiveMegaMenu(null)}
+      >
+        <div className="flex items-center justify-between h-[88px]">
           
           {/* Mobile Menu Icon */}
           <button className="md:hidden text-[var(--primary-text)]">
@@ -31,17 +46,25 @@ export default function Header() {
           </button>
 
           {/* Left Nav (Desktop) */}
-          <nav className="hidden md:flex items-center gap-8 flex-1">
+          <nav className="hidden md:flex items-center gap-10 lg:gap-14 flex-1">
             {NAV_LINKS.map((link) => (
-              <Link
+              <div 
                 key={link.href}
-                href={link.href}
-                className={`font-sans font-light text-[10px] uppercase tracking-[0.15em] transition-colors duration-400 ${
-                  pathname === link.href ? 'text-[var(--primary-text)]' : 'text-[var(--surface)] hover:text-[var(--primary-text)]'
-                }`}
+                className="relative"
+                onMouseEnter={() => link.hasMegaMenu && setActiveMegaMenu(link.href)}
               >
-                {link.label}
-              </Link>
+                <Link
+                  href={link.href}
+                  className={`font-sans font-light text-[10px] uppercase tracking-[0.15em] transition-colors duration-400 ${
+                    pathname === link.href ? 'text-[var(--primary-text)]' : 'text-[var(--surface)] hover:text-[var(--primary-text)]'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+                {link.hasMegaMenu && activeMegaMenu === link.href && (
+                  <MegaMenu onClose={() => setActiveMegaMenu(null)} />
+                )}
+              </div>
             ))}
           </nav>
 
@@ -55,23 +78,31 @@ export default function Header() {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center justify-end gap-8 flex-1">
-            <button className="text-[var(--surface)] hover:text-[var(--primary-text)] transition-colors duration-400">
-              <Search size={18} strokeWidth={1} />
-            </button>
-            <Link 
-              href="/login" 
-              className="hidden md:block font-sans font-light text-[10px] uppercase tracking-[0.15em] text-[var(--surface)] hover:text-[var(--primary-text)] transition-colors duration-400"
-            >
-              Account
-            </Link>
+          <div className="flex items-center justify-end gap-6 md:gap-8 lg:gap-10 flex-1">
+            <div className="hidden md:block">
+              <SearchBar />
+            </div>
+            <UserAccount />
             <button 
-              onClick={() => setIsOpen(true)}
+              onClick={() => setWishlistOpen(true)}
+              className="text-[var(--surface)] hover:text-[var(--primary-text)] transition-colors duration-400 relative hidden md:block"
+              aria-label="Wishlist"
+            >
+              <Heart size={18} strokeWidth={1} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-[var(--accent)] text-[var(--background)] text-[8px] font-sans font-light rounded-full w-4 h-4 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={() => setCartOpen(true)}
               className="text-[var(--surface)] hover:text-[var(--primary-text)] transition-colors duration-400 relative"
+              aria-label="Shopping Cart"
             >
               <ShoppingBag size={18} strokeWidth={1} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-[var(--primary-text)] text-[var(--background)] text-[8px] font-sans font-light rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-2 bg-[var(--primary-text)] text-[var(--background)] text-[8px] font-sans font-light rounded-full w-4 h-4 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}

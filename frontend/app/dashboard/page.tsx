@@ -1,16 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Heart, Trash2, ShoppingBag } from 'lucide-react';
+import { useWishlistStore } from '@/lib/store';
+import { useCartStore } from '@/lib/store';
 
-export default function DashboardPage() {
+function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'orders');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
+  const { items: wishlistItems, removeItem } = useWishlistStore();
+  const addToCart = useCartStore(state => state.addItem);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -52,6 +65,18 @@ export default function DashboardPage() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     router.push('/login');
+  };
+
+  const handleMoveToCart = (item: any) => {
+    addToCart({
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      price: item.price,
+      imgUrl: item.imgUrl,
+      quantity: 1,
+    });
+    removeItem(item.id);
   };
 
   if (!user && !loading) return null;
@@ -169,12 +194,51 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'wishlist' && (
-              <div className="glass-card p-8 min-h-[500px] flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-4xl mb-4 opacity-50">💝</div>
-                  <h2 className="text-2xl font-bold text-[var(--cream)] mb-2">Your Wishlist</h2>
-                  <p className="text-[var(--text-muted)]">Save your favorite chocolates for later.</p>
-                </div>
+              <div className="glass-card p-8 min-h-[500px]">
+                <h2 className="text-2xl font-bold text-[var(--cream)] mb-8">Your Wishlist</h2>
+                
+                {wishlistItems.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Heart size={48} strokeWidth={0.5} className="mx-auto mb-6 text-[var(--text-muted)]" />
+                    <p className="text-[var(--text-muted)] mb-6">Your wishlist is empty</p>
+                    <Link href="/shop" className="btn-gold">
+                      Browse Collection
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {wishlistItems.map((item) => (
+                      <div key={item.id} className="border border-[var(--gold)]/20 rounded-xl p-4 bg-white/5 hover:bg-white/10 transition-colors flex gap-4">
+                        <Link href={`/shop/${item.slug}`} className="w-24 h-24 relative rounded-lg overflow-hidden bg-[var(--muted)] flex-shrink-0">
+                          <Image src={item.imgUrl} alt={item.name} fill className="object-cover" sizes="96px" />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/shop/${item.slug}`} className="font-semibold text-[var(--cream)] hover:text-[var(--gold-bright)] transition-colors block truncate">
+                            {item.name}
+                          </Link>
+                          {item.origin && (
+                            <p className="text-xs text-[var(--text-muted)] mt-1 uppercase tracking-wider">{item.origin}</p>
+                          )}
+                          <p className="text-lg font-bold text-gold-gradient mt-2">₹{item.price}</p>
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => handleMoveToCart(item)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[var(--gold-bright)] hover:text-[var(--gold)] transition-colors"
+                            >
+                              <ShoppingBag size={12} /> Move to Cart
+                            </button>
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              <Trash2 size={12} /> Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -193,3 +257,13 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+function DashboardWithSuspense() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)] pt-32 flex items-center justify-center font-sans text-[10px] uppercase tracking-[0.15em] text-[var(--muted)]">Loading...</div>}>
+      <DashboardPage />
+    </Suspense>
+  );
+}
+
+export default DashboardWithSuspense;
