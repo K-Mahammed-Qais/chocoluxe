@@ -3,14 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LayoutDashboard, Package, ShoppingCart, Users, FolderTree, Settings, ExternalLink, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -19,130 +25,130 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/admin/login');
       }
     }
-  }, [pathname, router]);
+  }, [isClient, pathname, router]);
 
   if (!isClient) return null;
 
   if (pathname === '/admin/login') {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        background: 'var(--bg)',
-        backgroundImage: 'radial-gradient(ellipse at 20% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%)',
-        color: 'var(--text-primary)',
-        fontFamily: 'var(--font-inter, Inter, system-ui, sans-serif)',
-        position: 'fixed',
-        inset: 0,
-        overflowY: 'auto',
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
+      <div className="min-h-screen bg-gradient-to-br from-[#F7F2EC] via-[#EDE4DA] to-[#F7F2EC] flex items-center justify-center p-4">
         {children}
       </div>
     );
   }
 
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/categories', label: 'Categories', icon: FolderTree },
+    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/users', label: 'Users', icon: Users },
+    { href: '/admin/settings', label: 'Settings', icon: Settings },
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+
   return (
-    <div style={{ 
-      position: 'fixed', 
-      inset: 0, 
-      display: 'flex',
-      background: 'var(--bg)',
-      backgroundImage: 'radial-gradient(ellipse at 20% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%)',
-      color: 'var(--text-primary)',
-    }}>
-      {/* Glass Sidebar */}
-      <aside style={{ 
-        width: '260px', 
-        display: 'flex', 
-        flexDirection: 'column',
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(20px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-        borderRight: '1px solid var(--glass-border)',
-      }}>
-        <div style={{ 
-          padding: '1.5rem', 
-          borderBottom: '1px solid var(--glass-border)',
-          background: 'rgba(255,253,249,0.5)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-        }}>
-          <h2 style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: 900, 
-            fontFamily: 'var(--font-playfair, Georgia, serif)',
-            fontStyle: 'italic',
-            color: 'var(--text-primary)',
-          }}>
-            ChocoLuxe
-          </h2>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Admin Panel
-          </p>
+    <div className="min-h-screen flex bg-gradient-to-br from-[#F7F2EC] via-[#EDE4DA] to-[#F7F2EC]">
+      <aside className={`glass-sidebar ${collapsed ? 'collapsed' : ''}`}>
+        <div className="flex items-center justify-between p-5 border-b border-[rgba(185,139,106,0.15)]">
+          {!collapsed && (
+            <div>
+              <h1 className="text-xl font-serif italic text-[#4B2E2A] tracking-tight">ChocoLuxe</h1>
+              <p className="text-[9px] uppercase tracking-[0.2em] text-[#8B7355] mt-0.5">Admin Panel</p>
+            </div>
+          )}
+          {collapsed && (
+            <span className="text-xl font-serif italic text-[#D4AF37] mx-auto">C</span>
+          )}
         </div>
-        
-        <nav style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {[
-            { href: '/admin', label: 'Dashboard', icon: '◉' },
-            { href: '/admin/products', label: 'Products', icon: '◇' },
-            { href: '/admin/orders', label: 'Orders', icon: '○' },
-            { href: '/admin/users', label: 'Users', icon: '◎' },
-          ].map(item => {
+
+        <nav className="flex-1 py-4 px-3 space-y-1">
+          {navItems.map((item) => {
             const isActive = pathname === item.href || (pathname?.startsWith(`${item.href}/`) && item.href !== '/admin');
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease',
-                  background: isActive ? 'var(--glass-bg)' : 'transparent',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                  border: isActive ? '1px solid var(--glass-border)' : '1px solid transparent',
-                }}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                title={collapsed ? item.label : undefined}
               >
-                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{item.icon}</span>
-                {item.label}
+                <item.icon size={18} strokeWidth={1.5} className="flex-shrink-0" />
+                {!collapsed && <span className="text-[11px] uppercase tracking-wider">{item.label}</span>}
+                {isActive && !collapsed && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />}
               </Link>
-            )
+            );
           })}
         </nav>
-        
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--glass-border)', background: 'rgba(255,253,249,0.4)', backdropFilter: 'blur(8px)' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none', color: 'var(--text-muted)', transition: 'all 0.2s ease', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>↗</span>
-            View Store
+
+        <div className="p-3 space-y-1 border-t border-[rgba(185,139,106,0.15)]">
+          <Link href="/" target="_blank" className="nav-item">
+            <ExternalLink size={18} strokeWidth={1.5} />
+            {!collapsed && <span className="text-[11px] uppercase tracking-wider">View Store</span>}
           </Link>
-          <button 
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              router.push('/login');
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', width: '100%', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 600, background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', transition: 'all 0.2s ease' }}
-          >
-            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>⊖</span>
-            Sign Out
+          <button onClick={handleLogout} className="nav-item w-full text-red-500 hover:bg-red-50">
+            <LogOut size={18} strokeWidth={1.5} />
+            {!collapsed && <span className="text-[11px] uppercase tracking-wider">Sign Out</span>}
           </button>
         </div>
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-md hover:bg-[#C9A227] transition-colors"
+        >
+          {collapsed ? <ChevronRight size={12} className="text-[#2D1810]" /> : <ChevronLeft size={12} className="text-[#2D1810]" />}
+        </button>
       </aside>
 
-      {/* Main Content Area */}
-      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem', background: 'rgba(255,253,249,0.3)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8 max-w-[1400px] mx-auto">
           {children}
         </div>
       </main>
+
+      <style jsx>{`
+        .glass-sidebar {
+          width: 260px;
+          height: 100vh;
+          position: sticky;
+          top: 0;
+          display: flex;
+          flex-direction: column;
+          transition: width 0.3s ease;
+          position: relative;
+        }
+        .glass-sidebar.collapsed {
+          width: 80px;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          border-radius: 12px;
+          color: #8B7355;
+          transition: all 0.2s ease;
+          text-decoration: none;
+          border: 1px solid transparent;
+        }
+        .nav-item:hover {
+          background: rgba(185, 139, 106, 0.08);
+          color: #4B2E2A;
+        }
+        .nav-item.active {
+          background: rgba(212, 175, 55, 0.12);
+          border-color: rgba(212, 175, 55, 0.25);
+          color: #4B2E2A;
+        }
+        .glass-sidebar.collapsed .nav-item {
+          justify-content: center;
+          padding: 12px;
+        }
+      `}</style>
     </div>
   );
 }

@@ -19,14 +19,14 @@ export default function AdminLoginPage() {
     try {
       const { data } = await axios.post('/api/auth/login', { email, password });
       
-      if (data.role !== 'admin') {
+      if (data.user?.role !== 'admin') {
         setError('Admin access only');
         setLoading(false);
         return;
       }
       
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
+      localStorage.setItem('user', JSON.stringify(data.user));
       router.push('/admin');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
@@ -36,132 +36,64 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div style={{ 
-      width: '100%', 
-      maxWidth: '400px',
-      padding: '2rem',
-    }}>
-      <div style={{ 
-        padding: '2.5rem',
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(24px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '12px',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ 
-            fontSize: '1.75rem', 
-            fontWeight: 900, 
-            fontFamily: 'var(--font-playfair, Georgia, serif)',
-            fontStyle: 'italic',
-            color: 'var(--text-primary)',
-          }}>
-            ChocoLuxe
-          </h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-            Admin Access
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F7F2EC] via-[#EDE4DA] to-[#F7F2EC]">
+      <div className="w-full max-w-md p-8">
+        <div className="glass-card p-8 rounded-2xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-serif italic text-[#4B2E2A]">ChocoLuxe</h1>
+            <p className="text-[#8B7355] text-sm mt-2">Admin Access</p>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider text-[#8B7355] mb-2">
+                Admin Email
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="glass-input w-full bg-white/80"
+                placeholder="admin@chocoluxe.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider text-[#8B7355] mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="glass-input w-full bg-white/80"
+                placeholder="Enter password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-[#D4AF37] text-[#2D1810] font-sans text-[11px] uppercase tracking-wider hover:bg-[#C9A227] transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <a href="/login" className="text-[#8B7355] text-xs hover:text-[#D4AF37] transition-colors">
+              Back to user login
+            </a>
+          </div>
         </div>
-
-        {error && (
-          <div style={{ 
-            marginBottom: '1.5rem', 
-            padding: '0.75rem 1rem',
-            background: 'rgba(220, 38, 38, 0.1)',
-            border: '1px solid rgba(220, 38, 38, 0.2)',
-            borderRadius: '6px',
-            color: '#dc2626',
-            fontSize: '0.875rem',
-          }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div>
-            <label 
-              htmlFor="email" 
-              style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-            >
-              Admin Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.875rem 1rem',
-                background: 'var(--glass-bg)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '6px',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-                outline: 'none',
-                transition: 'border-color 0.2s ease',
-              }}
-            />
-          </div>
-
-          <div>
-            <label 
-              htmlFor="password" 
-              style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.875rem 1rem',
-                background: 'var(--glass-bg)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '6px',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-                outline: 'none',
-                transition: 'border-color 0.2s ease',
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.875rem 1rem',
-              background: 'var(--text-primary)',
-              color: 'var(--bg)',
-              border: '1px solid var(--text-primary)',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              cursor: 'pointer',
-              opacity: loading ? 0.6 : 1,
-              transition: 'all 0.3s ease',
-              marginTop: '0.5rem',
-            }}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
       </div>
     </div>
   );
