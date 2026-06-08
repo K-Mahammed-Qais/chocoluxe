@@ -249,25 +249,29 @@ function parseOrderItems(items: string): Array<{ product?: { name: string }; nam
   });
 }
 
-export async function addSheetOrder(order: Omit<SheetOrder, 'created_at' | 'status'>): Promise<boolean> {
+export async function submitSheetOrder(order: Omit<SheetOrder, 'created_at' | 'status'> & { status?: string; apartment?: string }): Promise<boolean> {
   const data = [{
     id: String(Date.now()),
+    order_id: order.order_id,
     email: order.email,
     first_name: order.first_name,
     last_name: order.last_name || '',
     street_address: order.street_address,
+    apartment: order.apartment || '',
     city: order.city,
     postal_code: order.postal_code,
     delivery_method: order.delivery_method,
     items: order.items,
     total_price: String(order.total_price),
-    status: 'Pending',
+    status: order.status || 'Pending',
     created_at: new Date().toISOString(),
     payment_method: 'COD',
     isPaid: 'false',
   }];
   return appendToSheet('orders', data);
 }
+
+export const addSheetOrder = submitSheetOrder;
 
 export async function updateSheetOrderStatus(orderId: string, status: string): Promise<boolean> {
   try {

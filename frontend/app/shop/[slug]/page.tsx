@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
@@ -13,7 +13,8 @@ import { getSheetProductBySlug, getSheetProducts } from '@/lib/sheetdb';
 
 const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-export default function ProductDetail({ params }: { params: { slug: string } }) {
+export default function ProductDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [product, setProduct] = useState<any>(null);
@@ -31,7 +32,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
         let relatedData = [];
 
         // Fetch from SheetDB
-        const prod = await getSheetProductBySlug(params.slug);
+        const prod = await getSheetProductBySlug(slug);
         if (!prod) throw new Error('Product not found in Google Sheet');
 
         mappedProduct = {
@@ -75,7 +76,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
     };
 
     fetchData();
-  }, [params.slug]);
+  }, [slug]);
 
   const handleAdd = () => {
     if (!product) return;
